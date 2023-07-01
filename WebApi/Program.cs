@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
+using WebApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,12 +20,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.Configure<FormOptions>(options =>
 {
-    options.MultipartBodyLengthLimit = 1073741824;
+    options.MultipartBodyLengthLimit = UploadFolder.MAX_FILE_SIZE;
 });
 
 builder.Services.Configure<IISServerOptions>(options =>
 {
-    options.MaxRequestBodySize = 1073741824;
+    options.MaxRequestBodySize = UploadFolder.MAX_FILE_SIZE;
 });
 
 var app = builder.Build();

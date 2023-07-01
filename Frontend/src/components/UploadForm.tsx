@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState } from "react";
+import React, { ChangeEvent, Fragment, useState } from "react";
 import axios from "axios";
 import { ProgressBar } from "react-bootstrap";
 
@@ -25,10 +25,10 @@ const UploadForm: React.FC = () => {
     formData.append("file", selectedFile);
 
     console.log(formData.get("file"));
-    console.log(formData.get("description"));
+    //console.log(formData.get("description"));
 
     await axios
-      .post("https://localhost:7181/Upload", formData, {
+      .post("https://localhost:7156/Upload", formData, {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total !== undefined) {
             SetProgress(
@@ -48,28 +48,52 @@ const UploadForm: React.FC = () => {
   };
 
   return (
-    <div className="mb-3">
-      <label htmlFor="file-upload" className="btn btn-primary">
-        Select file
-      </label>
-      <input id="file-upload" hidden type="file" onChange={handleFileChange} />
-
-      <label className="form-text" htmlFor="description">
-        Description
-      </label>
-      <input
-        id="description"
-        className="form-control"
-        type="text"
-        onChange={handleDescriptionChange}
-      />
-      <button className="btn btn-primary" onClick={handleUpload}>
-        Upload
-      </button>
-      <ProgressBar className="" min={0} max={100} now={progress}></ProgressBar>
-      <img src="" alt="" />
-    </div>
+    <Fragment>
+      <div className="upload-form">
+        <div className="mb-3">
+          <label htmlFor="file-upload" className="btn btn-secondary">
+            Select file
+          </label>
+          <input
+            id="file-upload"
+            hidden
+            type="file"
+            onChange={handleFileChange}
+          />
+          <label className="upload-label">{selectedFile?.name}</label>
+        </div>
+        <label className="form-text" htmlFor="description">
+          Description
+        </label>
+        <input
+          id="description"
+          className="form-control mb-4"
+          type="text"
+          onChange={handleDescriptionChange}
+        />
+        <button
+          className="btn btn-primary mb-4 btn-upload"
+          onClick={handleUpload}
+        >
+          Upload
+        </button>
+        <ProgressBar
+          className="my-progress-bar"
+          now={progress}
+          min={0}
+          max={100}
+        />
+      </div>
+      {/* TODO: cancel button appearing when downloading is in proccess  */}
+    </Fragment>
   );
 };
+
+/* <div>
+          <img
+            src="https://localhost:7156/Image/833ef6917bae9e009781a481f507fe51.jpg"
+            alt=""
+          />
+        </div> */
 
 export default UploadForm;

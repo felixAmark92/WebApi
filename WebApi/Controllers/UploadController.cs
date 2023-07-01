@@ -11,6 +11,7 @@ public class UploadController : ControllerBase
     // private readonly ApplicationDbContext _context;
 
     [HttpPost]
+    [RequestSizeLimit(UploadFolder.MAX_FILE_SIZE)]
     public async Task<IActionResult> UploadFile(IFormFile file)
     {
 
@@ -35,7 +36,7 @@ public class UploadController : ControllerBase
             UploadDate = DateTime.Now,
             UploaderId = 1,
             Category = "none",
-            FilePath = filePath,
+            //FilePath = filePath,
         };
 
         //_context.UploadedFiles.Add(newFile);
