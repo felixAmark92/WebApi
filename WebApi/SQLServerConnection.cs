@@ -2,6 +2,7 @@ using System.Data.SqlClient;
 
 public static class TestDB
 {
-    public static SqlConnection Connection = new SqlConnection("Server=DESKTOP-QNHH17P\\SQLEXPRESS;Database=TestDB;Integrated Security=True;");
+    private static string connection = File.ReadAllText(@"C:\Users\Felix\Documents\Secure\connection.txt");
+    public static SqlConnection Connection = new SqlConnection(connection);
 }
 

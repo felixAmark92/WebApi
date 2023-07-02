@@ -23,9 +23,10 @@ const UploadForm: React.FC = () => {
     const formData = new FormData();
 
     formData.append("file", selectedFile);
+    formData.append("description", textDescription);
 
     console.log(formData.get("file"));
-    //console.log(formData.get("description"));
+    console.log(formData.get("description"));
 
     await axios
       .post("https://localhost:7156/Upload", formData, {
@@ -34,8 +35,6 @@ const UploadForm: React.FC = () => {
             SetProgress(
               Math.round((progressEvent.loaded / progressEvent.total) * 100)
             );
-            // Update the progress bar value or perform any other UI updates
-            console.log(`Upload Progress: ${progress}%`);
           }
         },
       })

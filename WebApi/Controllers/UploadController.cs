@@ -20,7 +20,7 @@ public class UploadController : ControllerBase
 
         string fileExtension = Path.GetExtension(file.FileName);
         var fileName = Guid.NewGuid() + fileExtension;
-        var filePath = Path.Combine(UploadFolder.VIDEOS + fileName);
+        var filePath = Path.Combine(UploadFolder.VIDEOS, fileName);
 
         using (var stream = new FileStream(filePath, FileMode.Create))
         {
