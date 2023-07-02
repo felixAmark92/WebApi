@@ -1,28 +1,22 @@
-import axios from "axios";
-import React, { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useState } from "react";
 import { Button } from "react-bootstrap";
 
 const VideoPlayer = () => {
   const [videoId, setVideoId] = useState(0);
   const [id, setId] = useState(0);
 
+  const videoSource = `https://localhost:7156/Video?Id=${videoId}`;
   return (
     <Fragment>
       <input type="number" onChange={(e) => setId(parseInt(e.target.value))} />
 
-      <Button
-        onClick={() => {
-          setVideoId(id);
-        }}
-      ></Button>
+      <Button onClick={() => setVideoId(id)}>Select</Button>
       <p>{videoId}</p>
-
-      <video width="420" height="240" controls className="ms-5">
-        <source
-          src={"https://localhost:7156/Video?Id=" + videoId}
-          type="video/mp4"
-        />
-      </video>
+      <div className="d-flex justify-content-center">
+        <video key={videoSource} width="420" controls autoPlay className="">
+          <source src={videoSource} type="video/mp4" />
+        </video>
+      </div>
     </Fragment>
   );
 };
