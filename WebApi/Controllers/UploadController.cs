@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Data.SqlClient;
 using WebApi.Models;
 namespace WebApi.Controllers;
 
@@ -12,35 +13,32 @@ public class UploadController : ControllerBase
 
     [HttpPost]
     [RequestSizeLimit(UploadFolder.MAX_FILE_SIZE)]
-    public async Task<IActionResult> UploadFile(IFormFile file)
+    public async Task<IActionResult> UploadFile(IFormFile file, string description)
     {
-
         if (file == null || file.Length == 0)
             return BadRequest("No file uploaded.");
 
-        var uploadsFolderPath = Path.Combine(UploadFolder.IMAGES_PATH);
-        if (!Directory.Exists(uploadsFolderPath))
-            Directory.CreateDirectory(uploadsFolderPath);
-
         string fileExtension = Path.GetExtension(file.FileName);
+        var fileName = Guid.NewGuid() + fileExtension;
+        var filePath = Path.Combine(UploadFolder.VIDEOS + fileName);
 
-        var filePath = Path.Combine(uploadsFolderPath, Guid.NewGuid() + fileExtension);
         using (var stream = new FileStream(filePath, FileMode.Create))
         {
             await file.CopyToAsync(stream);
         }
 
-        var newFile = new UploadedFile
-        {
-            //Description = description,
-            UploadDate = DateTime.Now,
-            UploaderId = 1,
-            Category = "none",
-            //FilePath = filePath,
-        };
+        TestDB.Connection.Open();
+        string sqlQuery =
+            $@"INSERT INTO dbo.videos
+            (description, datetime, uploaderid, filename)
+            VALUES
+            ('{description}', '{DateTime.UtcNow}', 1, '{fileName}');";
 
-        //_context.UploadedFiles.Add(newFile);
-        //await _context.SaveChangesAsync();
+        using (SqlCommand command = new SqlCommand(sqlQuery, TestDB.Connection))
+        {
+            command.BeginExecuteNonQuery();
+        }
+        TestDB.Connection.Close();
 
         return Ok("File uploaded successfully.");
     }
