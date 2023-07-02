@@ -13,10 +13,10 @@ public class UploadController : ControllerBase
 
     [HttpPost]
     [RequestSizeLimit(UploadFolder.MAX_FILE_SIZE)]
-    public async Task<IActionResult> UploadFile(IFormFile file, string description)
+    public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] string  description)
     {
         if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded.");
+            return BadRequest("No file, or no description");
 
         string fileExtension = Path.GetExtension(file.FileName);
         var fileName = Guid.NewGuid() + fileExtension;

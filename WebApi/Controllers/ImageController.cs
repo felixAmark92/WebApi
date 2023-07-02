@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Reflection.PortableExecutable;
 using WebApi.Models;
 
 
@@ -29,19 +31,38 @@ public class ImageController : ControllerBase
 [Route("[controller]")]
 public class VideoController : ControllerBase
 {
-    [HttpGet("{videoName}")]
-    public IActionResult GetVideo(string videoName)
+    [HttpGet]
+    public IActionResult GetVideo(int Id)
     {
-        string videoPath = Path.Combine(UploadFolder.IMAGES, videoName);
+        string? videoName = "";
+        TestDB.Connection.Open();
+        string sqlQuery =
+            $@"SELECT filename
+            FROM dbo.videos
+            WHERE id = {Id};";
+
+        SqlCommand command = new SqlCommand(sqlQuery, TestDB.Connection);
+        SqlDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            videoName = reader["filename"].ToString();
+        }
+        reader.Close();
+        TestDB.Connection.Close();
+
+        if (videoName == null || videoName == "")
+            return BadRequest("video is null");
+
+        string videoPath = Path.Combine(UploadFolder.VIDEOS, videoName);
 
         if (!System.IO.File.Exists(videoPath))
         {
-            return NotFound("no file");
+            return NotFound($"video {videoName} could not be found2");
         }
-        var filestream = System.IO.File.OpenRead(videoPath);
+        Stream filestream = System.IO.File.OpenRead(videoPath);
        
-        string videoContentType = MimeTypes.GetMimeType(videoName);
 
-        return File(filestream, videoContentType, enableRangeProcessing: true);
+        return File(filestream, "video/mp4", enableRangeProcessing: true);
     }
 }
