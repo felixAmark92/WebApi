@@ -44,6 +44,7 @@ const UploadForm: React.FC = () => {
       })
       .catch((error) => {
         console.error(error);
+        console.error(error.response.data.errors[""][0]);
       });
   };
 
@@ -88,12 +89,5 @@ const UploadForm: React.FC = () => {
     </Fragment>
   );
 };
-
-/* <div>
-          <img
-            src="https://localhost:7156/Image/833ef6917bae9e009781a481f507fe51.jpg"
-            alt=""
-          />
-        </div> */
 
 export default UploadForm;

@@ -18,7 +18,7 @@ public class UploadController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest("No file uploaded.");
 
-        var uploadsFolderPath = Path.Combine(UploadFolder.IMAGES);
+        var uploadsFolderPath = Path.Combine(UploadFolder.IMAGES_PATH);
         if (!Directory.Exists(uploadsFolderPath))
             Directory.CreateDirectory(uploadsFolderPath);
 
