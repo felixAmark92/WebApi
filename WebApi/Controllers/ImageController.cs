@@ -35,11 +35,11 @@ public class VideoController : ControllerBase
     public IActionResult GetVideo(int Id)
     {
         string? videoName = "";
-        
+
         string sqlQuery =
             $@"SELECT filename
             FROM dbo.videos
-            WHERE id = {Id};";
+            WHERE id = {Id}";
         SqlConnection connection = TestDB.GetConnection();
         connection.Open();
         var command = new SqlCommand(sqlQuery, connection);
@@ -62,8 +62,13 @@ public class VideoController : ControllerBase
             return NotFound($"video {videoName} could not be found2");
         }
         Stream filestream = System.IO.File.OpenRead(videoPath);
-       
 
-        return File(filestream, "video/mp4", enableRangeProcessing: true);
+        string fileType = MimeTypes.GetMimeType(videoPath);
+        if (fileType == "application/mp4")
+        {
+            fileType = "video/mp4";
+        }
+
+        return File(filestream, fileType, enableRangeProcessing: true);
     }
 }
