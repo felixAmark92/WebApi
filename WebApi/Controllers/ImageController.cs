@@ -32,7 +32,7 @@ public class ImageController : ControllerBase
 public class VideoController : ControllerBase
 {
     [HttpGet]
-    public IActionResult GetVideo(int Id)
+    public async Task<IActionResult> GetVideo(int Id)
     {
         string? videoName = "";
 
@@ -40,17 +40,19 @@ public class VideoController : ControllerBase
             $@"SELECT filename
             FROM dbo.videos
             WHERE id = {Id}";
-        SqlConnection connection = TestDB.GetConnection();
-        connection.Open();
-        var command = new SqlCommand(sqlQuery, connection);
-        SqlDataReader reader = command.ExecuteReader();
-
-        while (reader.Read())
+        using (SqlConnection connection = TestDB.GetConnection())
         {
-            videoName = reader["filename"].ToString();
+            await connection.OpenAsync();
+            var command = new SqlCommand(sqlQuery, connection);
+            SqlDataReader reader = command.ExecuteReader();
+
+            while (await reader.ReadAsync())
+            {
+                videoName = reader["filename"].ToString();
+            }
+            reader.Close();
+            await connection.CloseAsync();
         }
-        reader.Close();
-        connection.Close();
 
         if (videoName == null || videoName == "")
             return BadRequest("video is null");
