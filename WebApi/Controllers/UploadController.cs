@@ -27,18 +27,20 @@ public class UploadController : ControllerBase
             await file.CopyToAsync(stream);
         }
 
-        TestDB.Connection.Open();
+        
         string sqlQuery =
             $@"INSERT INTO dbo.videos
             (description, datetime, uploaderid, filename)
             VALUES
             ('{description}', '{DateTime.UtcNow}', 1, '{fileName}');";
 
-        using (SqlCommand command = new SqlCommand(sqlQuery, TestDB.Connection))
+        var connection = TestDB.GetConnection();
+        connection.Open();
+        using (SqlCommand command = new SqlCommand(sqlQuery, connection))
         {
             command.BeginExecuteNonQuery();
         }
-        TestDB.Connection.Close();
+        connection.Close();
 
         return Ok("File uploaded successfully.");
     }

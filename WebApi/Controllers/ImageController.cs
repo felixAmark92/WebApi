@@ -35,13 +35,14 @@ public class VideoController : ControllerBase
     public IActionResult GetVideo(int Id)
     {
         string? videoName = "";
-        TestDB.Connection.Open();
+        
         string sqlQuery =
             $@"SELECT filename
             FROM dbo.videos
             WHERE id = {Id};";
-
-        SqlCommand command = new SqlCommand(sqlQuery, TestDB.Connection);
+        SqlConnection connection = TestDB.GetConnection();
+        connection.Open();
+        var command = new SqlCommand(sqlQuery, connection);
         SqlDataReader reader = command.ExecuteReader();
 
         while (reader.Read())
@@ -49,7 +50,7 @@ public class VideoController : ControllerBase
             videoName = reader["filename"].ToString();
         }
         reader.Close();
-        TestDB.Connection.Close();
+        connection.Close();
 
         if (videoName == null || videoName == "")
             return BadRequest("video is null");
