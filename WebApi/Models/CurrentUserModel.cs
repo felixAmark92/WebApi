@@ -8,7 +8,8 @@ public class CurrentUser
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
 
-
+    public CurrentUser()
+    { }
 
     public CurrentUser(int id, string firstName, string lastName, string email)
     {

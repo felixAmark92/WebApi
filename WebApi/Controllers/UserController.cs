@@ -54,42 +54,54 @@ public class UserController : ControllerBase
 public class AuthorizationController : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> AuthorizeUser([FromForm] string email, [FromForm] string password)
+    public IActionResult AuthorizeUser([FromForm] string email, [FromForm] string password)
     {
 
         byte[] salt = new byte[32];
         byte[] hash = new byte[32];
+        var currentUser = new CurrentUser();
 
         string sqlQuery =
-            $@"SELECT id, firstname, lastname, username, email, hash, salt
+            @"SELECT id, firstname, lastname, username, email, hash, salt
             FROM dbo.users
             WHERE email = @email";
         using (SqlConnection connection = TestDB.GetConnection())
         {
-            await connection.OpenAsync();
+            connection.Open();
             using (var command = new SqlCommand(sqlQuery, connection))
             {
                 command.Parameters.AddWithValue("@email", email);
                 SqlDataReader reader = command.ExecuteReader();
 
-                while (await reader.ReadAsync())
+                if (!reader.HasRows)
+                    return Unauthorized("your email or password is wrong1");
+                while (reader.Read())
                 {
                     reader.GetBytes(5, 0, hash, 0, 32);
                     reader.GetBytes(6, 0, salt, 0, 32);
+                    currentUser.Id = reader.GetInt32(0);
+                    currentUser.FirstName = reader["firstname"].ToString();
+                    currentUser.LastName = reader["lastname"].ToString();
+                    currentUser.Username = reader["username"].ToString();
+                    currentUser.Email = reader["email"].ToString();
+                    reader["lastname"].ToString();
                 }
-                await reader.CloseAsync();
-                await connection.CloseAsync();
+                reader.Close();
+                connection.Close();
             }
         }
 
         byte[] inputHash = Encryption.GetHash(password, salt);
 
-        if (inputHash == hash)
+        string inputHashToString = BitConverter.ToString(inputHash);
+        string dataBaseHashToString = BitConverter.ToString(hash);
+
+        if (inputHashToString == dataBaseHashToString)
         {
-            return Ok("success!");
+            return Ok(currentUser);
         }
 
-        return Unauthorized(inputHash);
+        return Unauthorized("your email or password is wrong2");
     }
 }
 
