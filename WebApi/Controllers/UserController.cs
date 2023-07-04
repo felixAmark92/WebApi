@@ -19,31 +19,28 @@ public class UserController : ControllerBase
         [FromForm] string email,
         [FromForm] string password)
     {
-        byte[] salt = Encryption.GetSalt();
+        byte[] salt = Encryption.GenerateSalt();
         byte[] hash = Encryption.GetHash(password, salt);
 
+        var data = new Dictionary<string, object>()
+        {
+            {"@firstname", firstName},
+            {"@lastname", lastName},
+            {"@username", username},
+            {"@email", email},
+            {"@hash", hash},
+            {"@salt", salt}
+        };
         string sqlQuery =
             @"INSERT INTO dbo.users (firstname, lastname, username, email, hash, salt)
             VALUES (@firstname, @lastname, @username, @email, @hash, @salt)";
-
-        using (SqlConnection connection = TestDB.GetConnection())
-        {
-            connection.Open();
-            using (SqlCommand command = new SqlCommand(sqlQuery, connection))
-            {
-                command.Parameters.AddWithValue("@firstname", firstName);
-                command.Parameters.AddWithValue("@lastname", lastName);
-                command.Parameters.AddWithValue("@username", username);
-                command.Parameters.AddWithValue("@email", email);
-                command.Parameters.AddWithValue("@hash", hash);
-                command.Parameters.AddWithValue("@salt", salt);
-                command.ExecuteNonQuery();
-            }
-            connection.Close();
-        }
+        SqlHandler.TryExecuteNonQuery(sqlQuery, data, TestDB.ConnectionString);
 
         return Ok("User registered");
     }
+
+
+
     [HttpPost("Authorization")]
     public IActionResult AuthorizeUser([FromForm] string email, [FromForm] string password)
     {
@@ -61,7 +58,6 @@ public class UserController : ControllerBase
         using SqlConnection connection = TestDB.GetConnection();
 
         connection.Open();
-
         using (var command = new SqlCommand(sqlQuery, connection))
         {
             command.Parameters.AddWithValue("@email", email);
@@ -73,16 +69,10 @@ public class UserController : ControllerBase
             {
                 reader.GetBytes(5, 0, hash, 0, 32);
                 reader.GetBytes(6, 0, salt, 0, 32);
-                currentUser.Id = reader.GetInt32(0);
-                currentUser.FirstName = reader["firstname"].ToString();
-                currentUser.LastName = reader["lastname"].ToString();
-                currentUser.Username = reader["username"].ToString();
-                currentUser.Email = reader["email"].ToString();
-                reader["lastname"].ToString();
+                currentUser = SqlHandler.CreateCurrentUser(reader);
             }
             reader.Close();
         }
-
 
         byte[] inputHash = Encryption.GetHash(password, salt);
 
@@ -108,45 +98,101 @@ public class UserController : ControllerBase
             connection.Close();
             return Ok(currentUser);
         }
-
-
         connection.Close();
         return Unauthorized("Email or password is wrong");
     }
-    [HttpGet("read")]
+    [HttpPost("TryGetSession")]
     public IActionResult ReadCookie()
     {
-        // Read a cookie
-        string? cookieValue = Request.Cookies["sessionId"];
-        return Ok("Cookie value: " + cookieValue);
+        CurrentUser? currentUser = null;
+        string? sessionId = Request.Cookies["sessionId"];
+        string sqlQuery =
+          @"SELECT dbo.users.id, dbo.users.firstname, dbo.users.lastname, dbo.users.username, dbo.users.email
+            FROM dbo.session_ids
+            JOIN dbo.users ON dbo.session_ids.user_id = dbo.users.id
+            WHERE dbo.session_ids.id = @sessionId";
+
+        using SqlConnection connection = TestDB.GetConnection();
+
+        connection.Open();
+        using (var command = new SqlCommand(sqlQuery, connection))
+        {
+            command.Parameters.AddWithValue("@sessionId", sessionId);
+            SqlDataReader reader = command.ExecuteReader();
+
+            if (!reader.HasRows)
+                return Unauthorized("no session found");
+            while (reader.Read())
+            {
+                currentUser = SqlHandler.CreateCurrentUser(reader);
+            }
+            reader.Close();
+        }
+        connection.Close();
+        if (currentUser != null)
+        {
+            return Ok(currentUser);
+        }
+        return Unauthorized("no session found");
     }
-}
 
 
-public static class Encryption
-{
-    public static byte[] GetHash(string inputString, byte[] salt)
+    public static class Encryption
     {
-        byte[] inputBytes = Encoding.UTF8.GetBytes(inputString);
-        byte[] saltedInputBytes = inputBytes.Concat(salt).ToArray();
+        public static byte[] GetHash(string inputString, byte[] salt)
+        {
+            byte[] inputBytes = Encoding.UTF8.GetBytes(inputString);
+            byte[] saltedInputBytes = inputBytes.Concat(salt).ToArray();
 
-        using (HashAlgorithm algorithm = SHA256.Create())
-            return algorithm.ComputeHash(saltedInputBytes);
+            using (HashAlgorithm algorithm = SHA256.Create())
+                return algorithm.ComputeHash(saltedInputBytes);
+        }
+        public static byte[] GenerateSalt()
+        {
+            var random = RandomNumberGenerator.Create();
+            int max_length = 32;
+            byte[] salt = new byte[max_length];
+
+            random.GetNonZeroBytes(salt);
+
+            return salt;
+        }
+
     }
-    public static byte[] GetSalt()
+
+    public static class SqlHandler
     {
-        var random = RandomNumberGenerator.Create();
-        int max_length = 32;
-        byte[] salt = new byte[max_length];
+        public static void TryExecuteNonQuery(string sqlQuery, Dictionary<string, object> parameters, string connectionString)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                ExecuteNonQuery(sqlQuery, parameters, connection);
+                connection.Close();
+            }
+        }
+        public static void ExecuteNonQuery(string sqlQuery, Dictionary<string, object> parameters, SqlConnection connection)
+        {
+            using (var command = new SqlCommand(sqlQuery, connection))
+            {
+                foreach (var parameter in parameters)
+                {
+                    command.Parameters.AddWithValue(parameter.Key, parameter.Value);
+                }
+                command.ExecuteNonQuery();
+            }
+        }
 
-        random.GetNonZeroBytes(salt);
+        public static CurrentUser CreateCurrentUser(SqlDataReader reader)
+        {
+            return new CurrentUser(
+                reader.GetInt32(0),
+                reader["firstname"].ToString(),
+                reader["lastname"].ToString(),
+                reader["username"].ToString(),
+                reader["email"].ToString());
+        }
 
-        return salt;
+        // Other methods for executing queries, retrieving data, etc.
     }
-
-}
-
-public class SqlHandler
-{
-
 }

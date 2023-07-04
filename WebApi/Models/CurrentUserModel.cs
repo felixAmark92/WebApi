@@ -11,11 +11,12 @@ public class CurrentUser
     public CurrentUser()
     { }
 
-    public CurrentUser(int id, string firstName, string lastName, string email)
+    public CurrentUser(int id, string firstName, string lastName, string username, string email)
     {
         Id = id;
         FirstName = firstName;
         LastName = lastName;
+        Username = username;
         Email = email;
     }
 }
