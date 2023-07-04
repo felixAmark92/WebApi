@@ -28,7 +28,7 @@ public class UserController : ControllerBase
 
         using (SqlConnection connection = TestDB.GetConnection())
         {
-            await connection.OpenAsync();
+            connection.Open();
             using (SqlCommand command = new SqlCommand(sqlQuery, connection))
             {
                 command.Parameters.AddWithValue("@firstname", firstName);
@@ -37,74 +37,90 @@ public class UserController : ControllerBase
                 command.Parameters.AddWithValue("@email", email);
                 command.Parameters.AddWithValue("@hash", hash);
                 command.Parameters.AddWithValue("@salt", salt);
-                await command.ExecuteNonQueryAsync();
+                command.ExecuteNonQuery();
             }
-            await connection.CloseAsync();
-
+            connection.Close();
         }
-
 
         return Ok("User registered");
     }
-
-}
-
-[ApiController]
-[Route("[controller]")]
-public class AuthorizationController : ControllerBase
-{
-    [HttpPost]
+    [HttpPost("Authorization")]
     public IActionResult AuthorizeUser([FromForm] string email, [FromForm] string password)
     {
 
         byte[] salt = new byte[32];
         byte[] hash = new byte[32];
+
         var currentUser = new CurrentUser();
 
         string sqlQuery =
             @"SELECT id, firstname, lastname, username, email, hash, salt
-            FROM dbo.users
-            WHERE email = @email";
-        using (SqlConnection connection = TestDB.GetConnection())
-        {
-            connection.Open();
-            using (var command = new SqlCommand(sqlQuery, connection))
-            {
-                command.Parameters.AddWithValue("@email", email);
-                SqlDataReader reader = command.ExecuteReader();
+                FROM dbo.users
+                WHERE email = @email";
 
-                if (!reader.HasRows)
-                    return Unauthorized("your email or password is wrong1");
-                while (reader.Read())
-                {
-                    reader.GetBytes(5, 0, hash, 0, 32);
-                    reader.GetBytes(6, 0, salt, 0, 32);
-                    currentUser.Id = reader.GetInt32(0);
-                    currentUser.FirstName = reader["firstname"].ToString();
-                    currentUser.LastName = reader["lastname"].ToString();
-                    currentUser.Username = reader["username"].ToString();
-                    currentUser.Email = reader["email"].ToString();
-                    reader["lastname"].ToString();
-                }
-                reader.Close();
-                connection.Close();
+        using SqlConnection connection = TestDB.GetConnection();
+
+        connection.Open();
+
+        using (var command = new SqlCommand(sqlQuery, connection))
+        {
+            command.Parameters.AddWithValue("@email", email);
+            SqlDataReader reader = command.ExecuteReader();
+
+            if (!reader.HasRows)
+                return Unauthorized("Email or password is wrong");
+            while (reader.Read())
+            {
+                reader.GetBytes(5, 0, hash, 0, 32);
+                reader.GetBytes(6, 0, salt, 0, 32);
+                currentUser.Id = reader.GetInt32(0);
+                currentUser.FirstName = reader["firstname"].ToString();
+                currentUser.LastName = reader["lastname"].ToString();
+                currentUser.Username = reader["username"].ToString();
+                currentUser.Email = reader["email"].ToString();
+                reader["lastname"].ToString();
             }
+            reader.Close();
         }
+
 
         byte[] inputHash = Encryption.GetHash(password, salt);
 
-        string inputHashToString = BitConverter.ToString(inputHash);
-        string dataBaseHashToString = BitConverter.ToString(hash);
-
-        if (inputHashToString == dataBaseHashToString)
+        if (inputHash.SequenceEqual(hash))
         {
+            string sqlQuery2 =
+            @"INSERT INTO dbo.session_ids (id, user_id)
+                VALUES (@id, @userid)";
+            Guid sessionIdentifier = Guid.NewGuid();
+            using (var command = new SqlCommand(sqlQuery2, connection))
+            {
+                command.Parameters.AddWithValue("@userid", currentUser.Id);
+                command.Parameters.AddWithValue("@id", sessionIdentifier);
+                command.ExecuteNonQuery();
+            }
+            Response.Cookies.Append("sessionId", sessionIdentifier.ToString(), new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                Expires = DateTime.Now.AddDays(7),
+                Path = "/",
+                Secure = true,
+                HttpOnly = true
+            });
+            connection.Close();
             return Ok(currentUser);
         }
 
-        return Unauthorized("your email or password is wrong2");
+
+        connection.Close();
+        return Unauthorized("Email or password is wrong");
+    }
+    [HttpGet("read")]
+    public IActionResult ReadCookie()
+    {
+        // Read a cookie
+        string? cookieValue = Request.Cookies["sessionId"];
+        return Ok("Cookie value: " + cookieValue);
     }
 }
-
 
 
 public static class Encryption
@@ -127,5 +143,10 @@ public static class Encryption
 
         return salt;
     }
+
+}
+
+public class SqlHandler
+{
 
 }

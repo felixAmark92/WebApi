@@ -66,10 +66,6 @@ public class VideoController : ControllerBase
         Stream filestream = System.IO.File.OpenRead(videoPath);
 
         string fileType = MimeTypes.GetMimeType(videoPath);
-        if (fileType == "application/mp4")
-        {
-            fileType = "video/mp4";
-        }
 
         return File(filestream, fileType, enableRangeProcessing: true);
     }

@@ -13,13 +13,13 @@ const SignInForm = () => {
     formData.append("email", email);
     formData.append("password", password);
     await axios
-      .post("https://localhost:7156/Authorization", formData)
+      .post("https://localhost:7156/User/Authorization", formData)
       .then((response) => {
-        console.log(response.data);
+        console.log(response);
       })
       .catch((error) => {
         console.error(error);
-        console.error(error.response.data.errors[""][0]);
+        console.error(error.response.data);
       });
   };
 
