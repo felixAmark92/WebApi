@@ -13,7 +13,7 @@ public class UploadController : ControllerBase
 {
     [HttpPost]
     [RequestSizeLimit(UploadFolder.MAX_FILE_SIZE)]
-    public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] string description)
+    public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] string description, [FromForm] int uploaderId)
     {
         if (file == null || file.Length == 0)
             return BadRequest("No file, or no description");
@@ -32,7 +32,7 @@ public class UploadController : ControllerBase
             @"INSERT INTO dbo.videos
             (description, datetime, uploaderid, filename)
             VALUES
-            (@description, @datetime, 1, @filename)";
+            (@description, @datetime, @uploaderid, @filename)";
 
         using (SqlConnection connection = TestDB.GetConnection())
         {
@@ -42,6 +42,7 @@ public class UploadController : ControllerBase
                 command.Parameters.AddWithValue("@description", description);
                 command.Parameters.AddWithValue("@datetime", DateTime.UtcNow);
                 command.Parameters.AddWithValue("@filename", fileName);
+                command.Parameters.AddWithValue("@uploaderid", uploaderId);
 
                 await command.ExecuteNonQueryAsync();
             }

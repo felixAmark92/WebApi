@@ -1,8 +1,12 @@
-import React, { ChangeEvent, Fragment, useState } from "react";
+import React, { ChangeEvent, Fragment, useEffect, useState } from "react";
 import axios from "axios";
 import { ProgressBar } from "react-bootstrap";
 
-const UploadForm: React.FC = () => {
+interface Props {
+  userId: number;
+}
+
+const UploadForm = ({ userId }: Props) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textDescription, setTextDescription] = useState("");
   const [progress, SetProgress] = useState(0);
@@ -18,15 +22,18 @@ const UploadForm: React.FC = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !textDescription) return;
+    if (!selectedFile || !textDescription || !userId) {
+      console.log("You failed!");
+      return;
+    }
 
     const formData = new FormData();
 
     formData.append("file", selectedFile);
     formData.append("description", textDescription);
+    formData.append("uploaderId", String(userId));
 
-    console.log(formData.get("file"));
-    console.log(formData.get("description"));
+    console.log("sending...");
 
     await axios
       .post("https://localhost:7156/Upload", formData, {

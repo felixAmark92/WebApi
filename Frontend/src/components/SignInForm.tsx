@@ -1,27 +1,14 @@
-import axios from "axios";
-import { FormEvent, useState } from "react";
-import { FormControl } from "react-bootstrap";
+import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 
-const SignInForm = () => {
+interface Props {
+  onSubmit: (email: string, password: string) => void;
+}
+
+const SignInForm = ({ onSubmit }: Props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const handleSubmit = async () => {
-    const formData = new FormData();
-    formData.append("email", email);
-    formData.append("password", password);
-    await axios
-      .post("https://localhost:7156/User/Authorization", formData)
-      .then((response) => {
-        console.log(response);
-      })
-      .catch((error) => {
-        console.error(error);
-        console.error(error.response.data);
-      });
-  };
 
   return (
     <Form>
@@ -48,7 +35,7 @@ const SignInForm = () => {
       <Form.Group className="mb-3" controlId="formBasicCheckbox">
         <Form.Check type="checkbox" label="Check me out" />
       </Form.Group>
-      <Button variant="primary" onClick={handleSubmit}>
+      <Button variant="primary" onClick={() => onSubmit(email, password)}>
         Submit
       </Button>
     </Form>
