@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Data.Common;
+using System.ComponentModel.Design;
+using System.Data;
+using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using WebApi.Models;
 namespace WebApi.Controllers;
@@ -8,12 +11,9 @@ namespace WebApi.Controllers;
 [Route("[controller]")]
 public class UploadController : ControllerBase
 {
-
-    // private readonly ApplicationDbContext _context;
-
     [HttpPost]
     [RequestSizeLimit(UploadFolder.MAX_FILE_SIZE)]
-    public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] string  description)
+    public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] string description, [FromForm] int uploaderId)
     {
         if (file == null || file.Length == 0)
             return BadRequest("No file, or no description");
@@ -27,20 +27,27 @@ public class UploadController : ControllerBase
             await file.CopyToAsync(stream);
         }
 
-        
+
         string sqlQuery =
-            $@"INSERT INTO dbo.videos
+            @"INSERT INTO dbo.videos
             (description, datetime, uploaderid, filename)
             VALUES
-            ('{description}', '{DateTime.UtcNow}', 1, '{fileName}')";
+            (@description, @datetime, @uploaderid, @filename)";
 
-        var connection = TestDB.GetConnection();
-        connection.Open();
-        using (SqlCommand command = new SqlCommand(sqlQuery, connection))
+        using (SqlConnection connection = TestDB.GetConnection())
         {
-            command.ExecuteNonQuery();
+            await connection.OpenAsync();
+            using (SqlCommand command = new SqlCommand(sqlQuery, connection))
+            {
+                command.Parameters.AddWithValue("@description", description);
+                command.Parameters.AddWithValue("@datetime", DateTime.UtcNow);
+                command.Parameters.AddWithValue("@filename", fileName);
+                command.Parameters.AddWithValue("@uploaderid", uploaderId);
+
+                await command.ExecuteNonQueryAsync();
+            }
+            await connection.CloseAsync();
         }
-        connection.Close();
 
         return Ok("File uploaded successfully.");
     }

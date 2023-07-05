@@ -32,25 +32,27 @@ public class ImageController : ControllerBase
 public class VideoController : ControllerBase
 {
     [HttpGet]
-    public IActionResult GetVideo(int Id)
+    public async Task<IActionResult> GetVideo(int Id)
     {
         string? videoName = "";
-        
+
         string sqlQuery =
             $@"SELECT filename
             FROM dbo.videos
-            WHERE id = {Id};";
-        SqlConnection connection = TestDB.GetConnection();
-        connection.Open();
-        var command = new SqlCommand(sqlQuery, connection);
-        SqlDataReader reader = command.ExecuteReader();
-
-        while (reader.Read())
+            WHERE id = {Id}";
+        using (SqlConnection connection = TestDB.GetConnection())
         {
-            videoName = reader["filename"].ToString();
+            await connection.OpenAsync();
+            var command = new SqlCommand(sqlQuery, connection);
+            SqlDataReader reader = command.ExecuteReader();
+
+            while (await reader.ReadAsync())
+            {
+                videoName = reader["filename"].ToString();
+            }
+            reader.Close();
+            await connection.CloseAsync();
         }
-        reader.Close();
-        connection.Close();
 
         if (videoName == null || videoName == "")
             return BadRequest("video is null");
@@ -62,8 +64,9 @@ public class VideoController : ControllerBase
             return NotFound($"video {videoName} could not be found2");
         }
         Stream filestream = System.IO.File.OpenRead(videoPath);
-       
 
-        return File(filestream, "video/mp4", enableRangeProcessing: true);
+        string fileType = MimeTypes.GetMimeType(videoPath);
+
+        return File(filestream, fileType, enableRangeProcessing: true);
     }
 }
