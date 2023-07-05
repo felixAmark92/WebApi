@@ -1,0 +1,49 @@
+import Container from "react-bootstrap/Container";
+import Nav from "react-bootstrap/Nav";
+import Navbar from "react-bootstrap/Navbar";
+//import NavDropdown from "react-bootstrap/NavDropdown";
+import { Link } from "react-router-dom";
+import User from "../models/user";
+
+interface Props {
+  user: User | null;
+}
+
+function Navigationbar({ user }: Props) {
+  return (
+    <Navbar bg="dark" data-bs-theme="dark">
+      <Container>
+        <Link className="navbar-brand" to="/">
+          Navbar
+        </Link>
+        <Nav className="me-auto">
+          <Link className="nav-link" to="/">
+            Home
+          </Link>
+          <Link className="nav-link" to="#features">
+            Features
+          </Link>
+          <Link className="nav-link" to="#pricing">
+            Pricing
+          </Link>
+          <Link className="nav-link" to="about">
+            About
+          </Link>
+        </Nav>
+        <Nav>
+          {user == null ? (
+            <Link className="nav-link" to="/sign-in">
+              Sign in
+            </Link>
+          ) : (
+            <Link className="nav-link" to="/sign-out">
+              Sign out
+            </Link>
+          )}
+        </Nav>
+      </Container>
+    </Navbar>
+  );
+}
+
+export default Navigationbar;

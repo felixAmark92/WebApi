@@ -13,7 +13,7 @@ namespace WebApi.Controllers;
 public class UserController : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> CreateUser(
+    public IActionResult CreateUser(
         [FromForm] string firstName,
         [FromForm] string lastName,
         [FromForm] string username,
