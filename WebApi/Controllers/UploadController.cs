@@ -32,13 +32,13 @@ public class UploadController : ControllerBase
             $@"INSERT INTO dbo.videos
             (description, datetime, uploaderid, filename)
             VALUES
-            ('{description}', '{DateTime.UtcNow}', 1, '{fileName}');";
+            ('{description}', '{DateTime.UtcNow}', 1, '{fileName}')";
 
         var connection = TestDB.GetConnection();
         connection.Open();
         using (SqlCommand command = new SqlCommand(sqlQuery, connection))
         {
-            command.BeginExecuteNonQuery();
+            command.ExecuteNonQuery();
         }
         connection.Close();
 
