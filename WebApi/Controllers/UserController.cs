@@ -144,6 +144,32 @@ public class UserController : ControllerBase
         return Unauthorized("no session found");
     }
 
+    [HttpPost("EndSession")]
+    public IActionResult EndSession()
+    {
+        string? sessionId = Request.Cookies["sessionId"];
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            return BadRequest("no session sent");
+        }
+
+        string sqlQuery = @"DELETE FROM dbo.session_ids WHERE id=@sessionId";
+        SqlHandler.TryExecuteNonQuery(sqlQuery, "@sessionId", sessionId, TestDB.ConnectionString);
+        Response.Cookies.Append("sessionId", "", new Microsoft.AspNetCore.Http.CookieOptions
+        {
+
+            MaxAge = TimeSpan.FromTicks(1),
+            Path = "/",
+            Domain = "localhost",
+            Secure = true,
+            HttpOnly = true
+        });
+
+        return Ok("session terminated");
+
+    }
+
+
 
     public static class Encryption
     {
@@ -179,7 +205,16 @@ public class UserController : ControllerBase
                 connection.Close();
             }
         }
-        public static void ExecuteNonQuery(string sqlQuery, Dictionary<string, object> parameters, SqlConnection connection)
+        public static void TryExecuteNonQuery(string sqlQuery, string key, object value, string connectionString)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                ExecuteNonQuery(sqlQuery, key, value, connection);
+                connection.Close();
+            }
+        }
+        private static void ExecuteNonQuery(string sqlQuery, Dictionary<string, object> parameters, SqlConnection connection)
         {
             using (var command = new SqlCommand(sqlQuery, connection))
             {
@@ -187,6 +222,14 @@ public class UserController : ControllerBase
                 {
                     command.Parameters.AddWithValue(parameter.Key, parameter.Value);
                 }
+                command.ExecuteNonQuery();
+            }
+        }
+        private static void ExecuteNonQuery(string sqlQuery, string key, object value, SqlConnection connection)
+        {
+            using (var command = new SqlCommand(sqlQuery, connection))
+            {
+                command.Parameters.AddWithValue(key, value);
                 command.ExecuteNonQuery();
             }
         }
