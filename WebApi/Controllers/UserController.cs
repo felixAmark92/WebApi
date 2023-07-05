@@ -91,8 +91,10 @@ public class UserController : ControllerBase
             }
             Response.Cookies.Append("sessionId", sessionIdentifier.ToString(), new Microsoft.AspNetCore.Http.CookieOptions
             {
+
                 Expires = DateTime.Now.AddDays(7),
                 Path = "/",
+                Domain = "localhost",
                 Secure = true,
                 HttpOnly = true
             });
@@ -107,6 +109,11 @@ public class UserController : ControllerBase
     {
         CurrentUser? currentUser = null;
         string? sessionId = Request.Cookies["sessionId"];
+
+        if (sessionId == null)
+        {
+            return BadRequest("no session could be found");
+        }
         string sqlQuery =
           @"SELECT dbo.users.id, dbo.users.firstname, dbo.users.lastname, dbo.users.username, dbo.users.email
             FROM dbo.session_ids

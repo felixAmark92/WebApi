@@ -6,7 +6,7 @@ class UserService {
     formData.append("email", email);
     formData.append("password", password);
     await apiClient
-      .post("/User/Authorization", formData)
+      .post("/User/Authorization", formData, { withCredentials: true })
       .then((response) => {
         console.log(response.data);
         return response.data;
