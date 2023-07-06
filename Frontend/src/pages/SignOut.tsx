@@ -1,5 +1,3 @@
-import React from "react";
-
 const SignOut = () => {
   return <h1>You have signed out</h1>;
 };

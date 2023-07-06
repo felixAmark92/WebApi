@@ -1,4 +1,3 @@
-import React from "react";
 import UploadForm from "../components/UploadForm";
 import User from "../models/user";
 
