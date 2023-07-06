@@ -31,42 +31,58 @@ public class ImageController : ControllerBase
 [Route("[controller]")]
 public class VideoController : ControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> GetVideo(int Id)
+    [HttpGet("{videoName}")]
+    public IActionResult GetVideo(string videoName)
     {
-        string? videoName = "";
-
-        string sqlQuery =
-            $@"SELECT filename
-            FROM dbo.videos
-            WHERE id = {Id}";
-        using (SqlConnection connection = TestDB.GetConnection())
-        {
-            await connection.OpenAsync();
-            var command = new SqlCommand(sqlQuery, connection);
-            SqlDataReader reader = command.ExecuteReader();
-
-            while (await reader.ReadAsync())
-            {
-                videoName = reader["filename"].ToString();
-            }
-            reader.Close();
-            await connection.CloseAsync();
-        }
-
-        if (videoName == null || videoName == "")
-            return BadRequest("video is null");
-
         string videoPath = Path.Combine(UploadFolder.VIDEOS, videoName);
 
         if (!System.IO.File.Exists(videoPath))
         {
-            return NotFound($"video {videoName} could not be found2");
+            var notFoundMessage = new string[] { "Video could not be found", $"Path: {videoPath}" };
+            return NotFound(notFoundMessage);
         }
         Stream filestream = System.IO.File.OpenRead(videoPath);
 
         string fileType = MimeTypes.GetMimeType(videoPath);
 
         return File(filestream, fileType, enableRangeProcessing: true);
+    }
+    [HttpPost]
+    public IActionResult GetVideos(int uploaderId)
+    {
+        var videos = new List<VideoModel>();
+
+        string sqlQuery =
+            $@"SELECT *
+            FROM dbo.videos
+            WHERE uploaderid = @uploaderId";
+        using (SqlConnection connection = TestDB.GetConnection())
+        {
+            connection.Open();
+            var command = new SqlCommand(sqlQuery, connection);
+            command.Parameters.AddWithValue("@uploaderId", uploaderId);
+            SqlDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var video = new VideoModel()
+                {
+                    Id = reader.GetInt32(0),
+                    Description = reader.GetString(1),
+                    dateTime = reader.GetDateTime(2),
+                    UploaderId = reader.GetInt32(3),
+                    FileName = reader.GetString(4)
+                };
+                videos.Add(video);
+            }
+            reader.Close();
+            connection.Close();
+        }
+
+        if (videos == null || videos.Count == 0)
+        {
+            return NotFound("no videos found");
+        }
+        return Ok(videos);
     }
 }

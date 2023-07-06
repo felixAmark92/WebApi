@@ -167,7 +167,4 @@ public class UserController : ControllerBase
         return Ok("session terminated");
     }
 
-
-
-
 }

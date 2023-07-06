@@ -1,11 +1,11 @@
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
-//import NavDropdown from "react-bootstrap/NavDropdown";
 import { Link } from "react-router-dom";
 import User from "../models/user";
-import userService from "../services/userService";
 import apiClient from "../services/apiClient";
+import { NavItem } from "react-bootstrap";
+import { Fragment } from "react";
 
 interface Props {
   user: User | null;
@@ -55,16 +55,21 @@ function Navigationbar({ user, signOut }: Props) {
               Sign in
             </Link>
           ) : (
-            <Link
-              onClick={() => {
-                terminateSession();
-                signOut();
-              }}
-              className="nav-link"
-              to="/sign-out"
-            >
-              Sign out
-            </Link>
+            <Fragment>
+              <NavItem className="nav-link nav-user">
+                {user.firstName + " " + user.lastName}
+              </NavItem>
+              <Link
+                onClick={() => {
+                  terminateSession();
+                  signOut();
+                }}
+                className="nav-link"
+                to="/sign-out"
+              >
+                Sign out
+              </Link>
+            </Fragment>
           )}
         </Nav>
       </Container>

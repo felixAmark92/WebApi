@@ -1,1 +1,9 @@
 @import "Uploadform.css";
+
+.nav-user {
+  color: white;
+}
+
+.nav-user:hover {
+  color: white;
+}
