@@ -7,6 +7,8 @@ import SignIn from "./pages/SignIn";
 import User from "./models/user";
 import apiClient from "./services/apiClient";
 import userService from "./services/userService";
+import SignOut from "./pages/SignOut";
+import UploadVideo from "./pages/UploadVideo";
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -34,6 +36,11 @@ function App() {
           path="/sign-in"
           element={<SignIn SetUser={(e) => setCurrentUser(e)} />}
         ></Route>
+        <Route path="sign-out" element={<SignOut />} />
+        <Route
+          path="upload-video"
+          element={<UploadVideo user={currentUser} />}
+        />
       </Routes>
     </Fragment>
   );

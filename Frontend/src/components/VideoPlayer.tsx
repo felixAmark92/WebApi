@@ -13,7 +13,7 @@ const VideoPlayer = () => {
       <Button onClick={() => setVideoId(id)}>Select</Button>
       <p>{videoId}</p>
       <div className="d-flex justify-content-center">
-        <video key={videoSource} width="420" controls autoPlay className="">
+        <video key={videoSource} width="auto" controls autoPlay className="">
           <source src={videoSource} type="video/mp4" />
         </video>
       </div>

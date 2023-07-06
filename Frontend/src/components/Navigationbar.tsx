@@ -38,6 +38,13 @@ function Navigationbar({ user, signOut }: Props) {
           <Link className="nav-link" to="#pricing">
             Pricing
           </Link>
+
+          {user !== null && (
+            <Link className="nav-link" to="/upload-video">
+              Upload
+            </Link>
+          )}
+
           <Link className="nav-link" to="about">
             About
           </Link>

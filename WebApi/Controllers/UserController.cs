@@ -5,6 +5,8 @@ using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
 using WebApi.Models;
+using WebApi.Services;
+
 namespace WebApi.Controllers;
 
 
@@ -21,7 +23,7 @@ public class UserController : ControllerBase
         [FromForm] string password)
     {
         byte[] salt = Encryption.GenerateSalt();
-        byte[] hash = Encryption.GetHash(password, salt);
+        byte[] hash = Encryption.CreateSHA256Hash(password, salt);
 
         var data = new Dictionary<string, object>()
         {
@@ -39,8 +41,6 @@ public class UserController : ControllerBase
 
         return Ok("User registered");
     }
-
-
 
     [HttpPost("Authorization")]
     public IActionResult AuthorizeUser([FromForm] string email, [FromForm] string password)
@@ -75,7 +75,7 @@ public class UserController : ControllerBase
             reader.Close();
         }
 
-        byte[] inputHash = Encryption.GetHash(password, salt);
+        byte[] inputHash = Encryption.CreateSHA256Hash(password, salt);
 
         if (inputHash.SequenceEqual(hash))
         {
@@ -157,7 +157,6 @@ public class UserController : ControllerBase
         SqlHandler.TryExecuteNonQuery(sqlQuery, "@sessionId", sessionId, TestDB.ConnectionString);
         Response.Cookies.Append("sessionId", "", new Microsoft.AspNetCore.Http.CookieOptions
         {
-
             MaxAge = TimeSpan.FromTicks(1),
             Path = "/",
             Domain = "localhost",
@@ -166,84 +165,9 @@ public class UserController : ControllerBase
         });
 
         return Ok("session terminated");
-
     }
 
 
 
-    public static class Encryption
-    {
-        public static byte[] GetHash(string inputString, byte[] salt)
-        {
-            byte[] inputBytes = Encoding.UTF8.GetBytes(inputString);
-            byte[] saltedInputBytes = inputBytes.Concat(salt).ToArray();
 
-            using (HashAlgorithm algorithm = SHA256.Create())
-                return algorithm.ComputeHash(saltedInputBytes);
-        }
-        public static byte[] GenerateSalt()
-        {
-            var random = RandomNumberGenerator.Create();
-            int max_length = 32;
-            byte[] salt = new byte[max_length];
-
-            random.GetNonZeroBytes(salt);
-
-            return salt;
-        }
-
-    }
-
-    public static class SqlHandler
-    {
-        public static void TryExecuteNonQuery(string sqlQuery, Dictionary<string, object> parameters, string connectionString)
-        {
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                ExecuteNonQuery(sqlQuery, parameters, connection);
-                connection.Close();
-            }
-        }
-        public static void TryExecuteNonQuery(string sqlQuery, string key, object value, string connectionString)
-        {
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                ExecuteNonQuery(sqlQuery, key, value, connection);
-                connection.Close();
-            }
-        }
-        private static void ExecuteNonQuery(string sqlQuery, Dictionary<string, object> parameters, SqlConnection connection)
-        {
-            using (var command = new SqlCommand(sqlQuery, connection))
-            {
-                foreach (var parameter in parameters)
-                {
-                    command.Parameters.AddWithValue(parameter.Key, parameter.Value);
-                }
-                command.ExecuteNonQuery();
-            }
-        }
-        private static void ExecuteNonQuery(string sqlQuery, string key, object value, SqlConnection connection)
-        {
-            using (var command = new SqlCommand(sqlQuery, connection))
-            {
-                command.Parameters.AddWithValue(key, value);
-                command.ExecuteNonQuery();
-            }
-        }
-
-        public static CurrentUser CreateCurrentUser(SqlDataReader reader)
-        {
-            return new CurrentUser(
-                reader.GetInt32(0),
-                reader["firstname"].ToString(),
-                reader["lastname"].ToString(),
-                reader["username"].ToString(),
-                reader["email"].ToString());
-        }
-
-        // Other methods for executing queries, retrieving data, etc.
-    }
 }
