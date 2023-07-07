@@ -1,8 +1,10 @@
+using System.Drawing;
 using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using WebApi.Models;
+using FFMpegCore;
 
 namespace WebApi.Controllers;
 
@@ -69,9 +71,6 @@ public class VideoController : ControllerBase
 
             while (reader.Read())
             {
-                // DateTime dateTime = reader.GetDateTime(2);
-                // string test = dateTime.ToShortDateString();
-                // string test2 = test;
 
                 var video = new VideoModel()
                 {
@@ -93,4 +92,45 @@ public class VideoController : ControllerBase
         }
         return Ok(videos);
     }
+
+    [HttpGet("thumbnail/{videoName}")]
+    public IActionResult GetVideoThumbnail(string videoName)
+    {
+        string thumbnailPath = UploadFolder.THUMBNAILS + videoName + ".png";
+        string thumbnailType = MimeTypes.GetMimeType(thumbnailPath);
+
+        
+        if (System.IO.File.Exists(thumbnailPath))
+        {
+            byte[] imageBytes = System.IO.File.ReadAllBytes(thumbnailPath);
+            return File(imageBytes, thumbnailType);
+        }
+
+        string videoPath = UploadFolder.VIDEOS + videoName;
+        var probeResult = FFProbe.Analyse(videoPath);
+
+        int originalWidth = probeResult.PrimaryVideoStream.Width;
+        int originalHeight = probeResult.PrimaryVideoStream.Height;
+        int newWidth = 0;
+        int newHeight = 0;
+        if (originalWidth > originalHeight) 
+        {
+            newWidth = 340;
+            newHeight = ((int)(float)newWidth / originalWidth * originalHeight);
+        }
+        else
+        {
+            newHeight = 300;
+            newWidth = ((int)(float)newHeight / originalHeight * originalWidth);
+        }
+
+        if (FFMpeg.Snapshot(videoPath, thumbnailPath, new Size(newWidth, newHeight), TimeSpan.FromSeconds(5)))
+        {
+            byte[] imageBytes2 = System.IO.File.ReadAllBytes(thumbnailPath);
+            return File(imageBytes2, thumbnailType);
+        }
+
+        return NotFound("No file was found");
+    }
+
 }

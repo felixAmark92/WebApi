@@ -4,6 +4,7 @@ import Video from "../models/video";
 import apiClient from "../services/apiClient";
 import { Link } from "react-router-dom";
 import VideoCard from "../components/VideoCard";
+import { Col, Container, Row } from "react-bootstrap";
 
 interface Props {
   user: User | null;
@@ -29,11 +30,11 @@ const UserVideos = ({ user }: Props) => {
   }, [user]);
 
   return (
-    <div>
+    <Container className="video-grid">
       {uservideos.map((video) => (
-        <VideoCard key={video.id} video={video}></VideoCard>
+        <VideoCard key={video.id} video={video} />
       ))}
-    </div>
+    </Container>
   );
 };
 

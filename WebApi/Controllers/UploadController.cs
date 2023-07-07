@@ -16,7 +16,10 @@ public class UploadController : ControllerBase
     public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] string description, [FromForm] int uploaderId)
     {
         if (file == null || file.Length == 0)
+        {
             return BadRequest("No file, or no description");
+        }
+
 
         string fileExtension = Path.GetExtension(file.FileName);
         var fileName = Guid.NewGuid() + fileExtension;

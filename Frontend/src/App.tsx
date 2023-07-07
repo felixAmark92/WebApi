@@ -9,6 +9,7 @@ import apiClient from "./services/apiClient";
 import SignOut from "./pages/SignOut";
 import UploadVideo from "./pages/UploadVideo";
 import UserVideos from "./pages/UserVideos";
+import { Container } from "react-bootstrap";
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -29,7 +30,7 @@ function App() {
   return (
     <Fragment>
       <Navigationbar user={currentUser} signOut={() => setCurrentUser(null)} />
-      <div className="container ms-5 me-5">
+      <Container className="">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -47,7 +48,7 @@ function App() {
             element={<UserVideos user={currentUser} />}
           ></Route>
         </Routes>
-      </div>
+      </Container>
     </Fragment>
   );
 }
