@@ -8,6 +8,7 @@ import User from "./models/user";
 import apiClient from "./services/apiClient";
 import SignOut from "./pages/SignOut";
 import UploadVideo from "./pages/UploadVideo";
+import UserVideos from "./pages/UserVideos";
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -28,19 +29,25 @@ function App() {
   return (
     <Fragment>
       <Navigationbar user={currentUser} signOut={() => setCurrentUser(null)} />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route
-          path="/sign-in"
-          element={<SignIn SetUser={(e) => setCurrentUser(e)} />}
-        ></Route>
-        <Route path="sign-out" element={<SignOut />} />
-        <Route
-          path="upload-video"
-          element={<UploadVideo user={currentUser} />}
-        />
-      </Routes>
+      <div className="container ms-5 me-5">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route
+            path="/sign-in"
+            element={<SignIn SetUser={(e) => setCurrentUser(e)} />}
+          ></Route>
+          <Route path="/sign-out" element={<SignOut />} />
+          <Route
+            path="/upload-video"
+            element={<UploadVideo user={currentUser} />}
+          />
+          <Route
+            path="videos"
+            element={<UserVideos user={currentUser} />}
+          ></Route>
+        </Routes>
+      </div>
     </Fragment>
   );
 }

@@ -12,6 +12,17 @@ class UserService {
     return null;
   };
 
+  FetchData = async (request: string, id: number) => {
+    try {
+      const response = await apiClient.post(request, undefined, {
+        params: { uploaderId: id },
+      });
+      return response.data;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  };
   AuthorizeUser = async (email: string, password: string) => {
     const formData = new FormData();
     formData.append("email", email);

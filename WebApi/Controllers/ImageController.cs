@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using WebApi.Models;
 
-
 namespace WebApi.Controllers;
 
 [ApiController]
@@ -45,6 +44,11 @@ public class VideoController : ControllerBase
 
         string fileType = MimeTypes.GetMimeType(videoPath);
 
+        if (fileType == "application/mp4")
+        {
+            fileType = "video/mp4";
+        }
+
         return File(filestream, fileType, enableRangeProcessing: true);
     }
     [HttpPost]
@@ -65,11 +69,15 @@ public class VideoController : ControllerBase
 
             while (reader.Read())
             {
+                // DateTime dateTime = reader.GetDateTime(2);
+                // string test = dateTime.ToShortDateString();
+                // string test2 = test;
+
                 var video = new VideoModel()
                 {
                     Id = reader.GetInt32(0),
                     Description = reader.GetString(1),
-                    dateTime = reader.GetDateTime(2),
+                    dateTime = reader.GetDateTime(2).ToShortDateString(),
                     UploaderId = reader.GetInt32(3),
                     FileName = reader.GetString(4)
                 };

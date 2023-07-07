@@ -35,9 +35,11 @@ function Navigationbar({ user, signOut }: Props) {
           <Link className="nav-link" to="#features">
             Features
           </Link>
-          <Link className="nav-link" to="#pricing">
-            Pricing
-          </Link>
+          {user !== null && (
+            <Link className="nav-link" to="/videos">
+              Your Videos
+            </Link>
+          )}
 
           {user !== null && (
             <Link className="nav-link" to="/upload-video">
