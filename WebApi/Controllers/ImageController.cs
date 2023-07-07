@@ -92,6 +92,44 @@ public class VideoController : ControllerBase
         }
         return Ok(videos);
     }
+    [HttpGet("watch")]
+    public IActionResult GetVideo(int id)
+    {
+        VideoModel? video = null;
+
+        string sqlQuery =
+            $@"SELECT *
+            FROM dbo.videos
+            WHERE id = @id";
+        using (SqlConnection connection = TestDB.GetConnection())
+        {
+            connection.Open();
+            var command = new SqlCommand(sqlQuery, connection);
+            command.Parameters.AddWithValue("@id", id);
+            SqlDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+
+                video = new VideoModel()
+                {
+                    Id = reader.GetInt32(0),
+                    Description = reader.GetString(1),
+                    dateTime = reader.GetDateTime(2).ToShortDateString(),
+                    UploaderId = reader.GetInt32(3),
+                    FileName = reader.GetString(4)
+                };
+            }
+            reader.Close();
+            connection.Close();
+        }
+
+        if (video == null)
+        {
+            return NotFound("requested video not found");
+        }
+        return Ok(video);
+    }
 
     [HttpGet("thumbnail/{videoName}")]
     public IActionResult GetVideoThumbnail(string videoName)
