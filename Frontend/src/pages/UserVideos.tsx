@@ -32,7 +32,11 @@ const UserVideos = ({ user }: Props) => {
   return (
     <Container className="video-grid">
       {uservideos.map((video) => (
-        <Link className="video-card" key={video.id} to={"../watch/" + video.id}>
+        <Link
+          style={{ textDecoration: "none" }}
+          key={video.id}
+          to={"../watch/" + video.id}
+        >
           <VideoCard video={video} />
         </Link>
       ))}

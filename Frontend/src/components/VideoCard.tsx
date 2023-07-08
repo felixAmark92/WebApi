@@ -18,7 +18,7 @@ const VideoCard = ({ video }: Props) => {
   };
 
   return (
-    <Card >
+    <Card className="video-card">
       <Card.Img
         className={"video-card-thumbnail " + className}
         variant="top"
