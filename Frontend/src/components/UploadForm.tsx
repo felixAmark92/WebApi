@@ -1,6 +1,7 @@
 import React, { ChangeEvent, Fragment, useEffect, useState } from "react";
 import axios from "axios";
 import { ProgressBar } from "react-bootstrap";
+import apiClient from "../services/apiClient";
 
 interface Props {
   userId: number;
@@ -35,8 +36,8 @@ const UploadForm = ({ userId }: Props) => {
 
     console.log("sending...");
 
-    await axios
-      .post("https://localhost:7156/Upload", formData, {
+    await apiClient
+      .post("/Upload", formData, {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total !== undefined) {
             SetProgress(

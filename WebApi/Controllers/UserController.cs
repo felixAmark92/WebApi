@@ -5,6 +5,8 @@ using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
 using WebApi.Models;
+using WebApi.Services;
+
 namespace WebApi.Controllers;
 
 
@@ -13,7 +15,7 @@ namespace WebApi.Controllers;
 public class UserController : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> CreateUser(
+    public IActionResult CreateUser(
         [FromForm] string firstName,
         [FromForm] string lastName,
         [FromForm] string username,
@@ -21,7 +23,7 @@ public class UserController : ControllerBase
         [FromForm] string password)
     {
         byte[] salt = Encryption.GenerateSalt();
-        byte[] hash = Encryption.GetHash(password, salt);
+        byte[] hash = Encryption.CreateSHA256Hash(password, salt);
 
         var data = new Dictionary<string, object>()
         {
@@ -39,8 +41,6 @@ public class UserController : ControllerBase
 
         return Ok("User registered");
     }
-
-
 
     [HttpPost("Authorization")]
     public IActionResult AuthorizeUser([FromForm] string email, [FromForm] string password)
@@ -75,7 +75,7 @@ public class UserController : ControllerBase
             reader.Close();
         }
 
-        byte[] inputHash = Encryption.GetHash(password, salt);
+        byte[] inputHash = Encryption.CreateSHA256Hash(password, salt);
 
         if (inputHash.SequenceEqual(hash))
         {
@@ -91,8 +91,10 @@ public class UserController : ControllerBase
             }
             Response.Cookies.Append("sessionId", sessionIdentifier.ToString(), new Microsoft.AspNetCore.Http.CookieOptions
             {
+
                 Expires = DateTime.Now.AddDays(7),
                 Path = "/",
+                Domain = "localhost",
                 Secure = true,
                 HttpOnly = true
             });
@@ -107,6 +109,11 @@ public class UserController : ControllerBase
     {
         CurrentUser? currentUser = null;
         string? sessionId = Request.Cookies["sessionId"];
+
+        if (sessionId == null)
+        {
+            return BadRequest("no session could be found");
+        }
         string sqlQuery =
           @"SELECT dbo.users.id, dbo.users.firstname, dbo.users.lastname, dbo.users.username, dbo.users.email
             FROM dbo.session_ids
@@ -137,63 +144,27 @@ public class UserController : ControllerBase
         return Unauthorized("no session found");
     }
 
-
-    public static class Encryption
+    [HttpPost("EndSession")]
+    public IActionResult EndSession()
     {
-        public static byte[] GetHash(string inputString, byte[] salt)
+        string? sessionId = Request.Cookies["sessionId"];
+        if (string.IsNullOrEmpty(sessionId))
         {
-            byte[] inputBytes = Encoding.UTF8.GetBytes(inputString);
-            byte[] saltedInputBytes = inputBytes.Concat(salt).ToArray();
-
-            using (HashAlgorithm algorithm = SHA256.Create())
-                return algorithm.ComputeHash(saltedInputBytes);
-        }
-        public static byte[] GenerateSalt()
-        {
-            var random = RandomNumberGenerator.Create();
-            int max_length = 32;
-            byte[] salt = new byte[max_length];
-
-            random.GetNonZeroBytes(salt);
-
-            return salt;
+            return BadRequest("no session sent");
         }
 
+        string sqlQuery = @"DELETE FROM dbo.session_ids WHERE id=@sessionId";
+        SqlHandler.TryExecuteNonQuery(sqlQuery, "@sessionId", sessionId, TestDB.ConnectionString);
+        Response.Cookies.Append("sessionId", "", new Microsoft.AspNetCore.Http.CookieOptions
+        {
+            MaxAge = TimeSpan.FromTicks(1),
+            Path = "/",
+            Domain = "localhost",
+            Secure = true,
+            HttpOnly = true
+        });
+
+        return Ok("session terminated");
     }
 
-    public static class SqlHandler
-    {
-        public static void TryExecuteNonQuery(string sqlQuery, Dictionary<string, object> parameters, string connectionString)
-        {
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                ExecuteNonQuery(sqlQuery, parameters, connection);
-                connection.Close();
-            }
-        }
-        public static void ExecuteNonQuery(string sqlQuery, Dictionary<string, object> parameters, SqlConnection connection)
-        {
-            using (var command = new SqlCommand(sqlQuery, connection))
-            {
-                foreach (var parameter in parameters)
-                {
-                    command.Parameters.AddWithValue(parameter.Key, parameter.Value);
-                }
-                command.ExecuteNonQuery();
-            }
-        }
-
-        public static CurrentUser CreateCurrentUser(SqlDataReader reader)
-        {
-            return new CurrentUser(
-                reader.GetInt32(0),
-                reader["firstname"].ToString(),
-                reader["lastname"].ToString(),
-                reader["username"].ToString(),
-                reader["email"].ToString());
-        }
-
-        // Other methods for executing queries, retrieving data, etc.
-    }
 }
