@@ -13,6 +13,11 @@
   height: 260px;
   padding: 0;
   justify-self: center;
+  text-decoration: none;
+}
+
+.video-card:hover {
+  cursor: pointer;
 }
 
 .video-card-thumbnail {
@@ -32,8 +37,20 @@
   display: grid;
 
   row-gap: 20px;
-  margin-top: 1rem;
+  margin-top: 20px;
   justify-content: center;
+}
+
+.card-title {
+  font-size: 1rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.card-body {
+  padding: 0.5rem;
 }
 
 @media (min-width: 768px) and (max-width: 992px) {

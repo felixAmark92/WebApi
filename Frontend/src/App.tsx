@@ -10,9 +10,12 @@ import SignOut from "./pages/SignOut";
 import UploadVideo from "./pages/UploadVideo";
 import UserVideos from "./pages/UserVideos";
 import { Container } from "react-bootstrap";
+import Video from "./models/video";
+import Watch from "./pages/Watch";
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
 
   useEffect(() => {
     if (currentUser == null || currentUser == undefined) {
@@ -37,16 +40,14 @@ function App() {
           <Route
             path="/sign-in"
             element={<SignIn SetUser={(e) => setCurrentUser(e)} />}
-          ></Route>
+          />
           <Route path="/sign-out" element={<SignOut />} />
           <Route
             path="/upload-video"
             element={<UploadVideo user={currentUser} />}
           />
-          <Route
-            path="videos"
-            element={<UserVideos user={currentUser} />}
-          ></Route>
+          <Route path="videos" element={<UserVideos user={currentUser} />} />
+          <Route path="watch/:id" element={<Watch />} />
         </Routes>
       </Container>
     </Fragment>

@@ -62,11 +62,22 @@ public class VideoController : ControllerBase
             $@"SELECT *
             FROM dbo.videos
             WHERE uploaderid = @uploaderId";
+
+        if (uploaderId == 7)
+        {
+            sqlQuery = $@"SELECT *
+            FROM dbo.videos";
+        }
+
+
         using (SqlConnection connection = TestDB.GetConnection())
         {
             connection.Open();
             var command = new SqlCommand(sqlQuery, connection);
-            command.Parameters.AddWithValue("@uploaderId", uploaderId);
+            if ( uploaderId != 7)
+            {
+                command.Parameters.AddWithValue("@uploaderId", uploaderId);
+            }
             SqlDataReader reader = command.ExecuteReader();
 
             while (reader.Read())
@@ -92,6 +103,44 @@ public class VideoController : ControllerBase
         }
         return Ok(videos);
     }
+    [HttpGet("watch")]
+    public IActionResult GetVideo(int id)
+    {
+        VideoModel? video = null;
+
+        string sqlQuery =
+            $@"SELECT *
+            FROM dbo.videos
+            WHERE id = @id";
+        using (SqlConnection connection = TestDB.GetConnection())
+        {
+            connection.Open();
+            var command = new SqlCommand(sqlQuery, connection);
+            command.Parameters.AddWithValue("@id", id);
+            SqlDataReader reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+
+                video = new VideoModel()
+                {
+                    Id = reader.GetInt32(0),
+                    Description = reader.GetString(1),
+                    dateTime = reader.GetDateTime(2).ToShortDateString(),
+                    UploaderId = reader.GetInt32(3),
+                    FileName = reader.GetString(4)
+                };
+            }
+            reader.Close();
+            connection.Close();
+        }
+
+        if (video == null)
+        {
+            return NotFound("requested video not found");
+        }
+        return Ok(video);
+    }
 
     [HttpGet("thumbnail/{videoName}")]
     public IActionResult GetVideoThumbnail(string videoName)
@@ -111,8 +160,9 @@ public class VideoController : ControllerBase
 
         int originalWidth = probeResult.PrimaryVideoStream.Width;
         int originalHeight = probeResult.PrimaryVideoStream.Height;
-        int newWidth = 0;
-        int newHeight = 0;
+        TimeSpan time = probeResult.Duration;
+        int newWidth;
+        int newHeight;
         if (originalWidth > originalHeight) 
         {
             newWidth = 340;
@@ -123,8 +173,7 @@ public class VideoController : ControllerBase
             newHeight = 300;
             newWidth = ((int)(float)newHeight / originalHeight * originalWidth);
         }
-
-        if (FFMpeg.Snapshot(videoPath, thumbnailPath, new Size(newWidth, newHeight), TimeSpan.FromSeconds(5)))
+        if (FFMpeg.Snapshot(videoPath, thumbnailPath, new Size(newWidth, newHeight),time / 2))
         {
             byte[] imageBytes2 = System.IO.File.ReadAllBytes(thumbnailPath);
             return File(imageBytes2, thumbnailType);
