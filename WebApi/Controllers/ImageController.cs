@@ -62,11 +62,22 @@ public class VideoController : ControllerBase
             $@"SELECT *
             FROM dbo.videos
             WHERE uploaderid = @uploaderId";
+
+        if (uploaderId == 7)
+        {
+            sqlQuery = $@"SELECT *
+            FROM dbo.videos";
+        }
+
+
         using (SqlConnection connection = TestDB.GetConnection())
         {
             connection.Open();
             var command = new SqlCommand(sqlQuery, connection);
-            command.Parameters.AddWithValue("@uploaderId", uploaderId);
+            if ( uploaderId != 7)
+            {
+                command.Parameters.AddWithValue("@uploaderId", uploaderId);
+            }
             SqlDataReader reader = command.ExecuteReader();
 
             while (reader.Read())
@@ -149,8 +160,9 @@ public class VideoController : ControllerBase
 
         int originalWidth = probeResult.PrimaryVideoStream.Width;
         int originalHeight = probeResult.PrimaryVideoStream.Height;
-        int newWidth = 0;
-        int newHeight = 0;
+        TimeSpan time = probeResult.Duration;
+        int newWidth;
+        int newHeight;
         if (originalWidth > originalHeight) 
         {
             newWidth = 340;
@@ -161,8 +173,7 @@ public class VideoController : ControllerBase
             newHeight = 300;
             newWidth = ((int)(float)newHeight / originalHeight * originalWidth);
         }
-
-        if (FFMpeg.Snapshot(videoPath, thumbnailPath, new Size(newWidth, newHeight), TimeSpan.FromSeconds(5)))
+        if (FFMpeg.Snapshot(videoPath, thumbnailPath, new Size(newWidth, newHeight),time / 2))
         {
             byte[] imageBytes2 = System.IO.File.ReadAllBytes(thumbnailPath);
             return File(imageBytes2, thumbnailType);
