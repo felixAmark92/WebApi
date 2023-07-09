@@ -177,16 +177,17 @@ public class VideoController : ControllerBase
 
         string fileExtension = Path.GetExtension(file.FileName);
         var fileName = "main" + fileExtension;
-        var folderPath = Guid.NewGuid().ToString();
-        var folderPathFull = Path.Combine(UploadFolder.VIDEOS, folderPath + "\\");
-        Directory.CreateDirectory(folderPathFull);
+        string folderName = Guid.NewGuid().ToString();
+        Console.WriteLine(folderName);
+        Directory.CreateDirectory(Path.Combine(UploadFolder.VIDEOS, folderName + "\\"));
+        Console.WriteLine(folderName);
+        using (var stream = new FileStream(Path.Combine(UploadFolder.VIDEOS, folderName, fileName), FileMode.Create))
 
-        using (var stream = new FileStream(Path.Combine(folderPathFull, fileName), FileMode.Create))
         {
             file.CopyTo(stream);
         }
 
-        VideoConverter.Main(folderPathFull, fileName);
+        VideoConverter.Main(folderName, fileName);
         Console.WriteLine("testing");
 
         string sqlQuery =
@@ -202,7 +203,7 @@ public class VideoController : ControllerBase
             {
                 command.Parameters.AddWithValue("@description", description);
                 command.Parameters.AddWithValue("@datetime", DateTime.UtcNow);
-                command.Parameters.AddWithValue("@filename", folderPath);
+                command.Parameters.AddWithValue("@filename", folderName);
                 command.Parameters.AddWithValue("@uploaderid", uploaderId);
 
                 await command.ExecuteNonQueryAsync();

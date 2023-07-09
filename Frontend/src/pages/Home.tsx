@@ -1,11 +1,12 @@
-import { Fragment } from "react";
-import VideoPlayer from "../components/VideoPlayer";
+import { Fragment, useRef } from "react";
+import ReactPlayer from "react-player";
+import MyVideoPlayer from "../components/MyVideoPlayer";
 
 const Home = () => {
   return (
     <Fragment>
       <div className="container mt-3">
-        <VideoPlayer></VideoPlayer>
+        <MyVideoPlayer />
       </div>
     </Fragment>
   );

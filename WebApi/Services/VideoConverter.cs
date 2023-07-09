@@ -8,19 +8,20 @@ namespace WebApi.Services;
 public static class VideoConverter
 {
 
-    public static void Main(string folderPath, string fileName)
+    public static void Main(string folderName, string fileName)
     {
+        Console.WriteLine("FOLDERNAME: " + folderName);
 
 
-        var probeResult = FFMpegCore.FFProbe.Analyse(Path.Combine(folderPath, fileName));
+        var probeResult = FFMpegCore.FFProbe.Analyse(Path.Combine(UploadFolder.VIDEOS, folderName, fileName));
 
         int originalHeight = probeResult.PrimaryVideoStream.Height;
 
         Console.WriteLine("original height:" + originalHeight.ToString());
         string[] resolutions = GetResolutions(originalHeight);
 
-        ConvertVideo(resolutions, folderPath, fileName);
-        GenerateMaster(resolutions, folderPath);
+        ConvertVideo(resolutions, folderName, fileName);
+        GenerateMaster(resolutions, folderName);
 
     }
 
@@ -38,12 +39,11 @@ public static class VideoConverter
     }
 
 
-    static void ConvertVideo(string[] resolutions, string folderPath, string fileName)
+    static void ConvertVideo(string[] resolutions, string folderName, string fileName)
     {
-
         foreach (string resolution in resolutions)
         {
-            CreateDirectory(Path.Combine(folderPath, resolution));
+            CreateDirectory(Path.Combine(UploadFolder.VIDEOS, folderName, resolution));
 
             try
             {
@@ -53,10 +53,10 @@ public static class VideoConverter
                 Process process = new Process();
                 ProcessStartInfo startInfo = new ProcessStartInfo("cmd.exe", "/c " + command)
                 {
-                    WorkingDirectory = folderPath + "\\"
+                    WorkingDirectory = Path.Combine(UploadFolder.VIDEOS, folderName)
 
                 };
-                Console.WriteLine(folderPath);
+                Console.WriteLine(folderName);
                 startInfo.RedirectStandardOutput = true;
                 startInfo.UseShellExecute = false;
                 startInfo.CreateNoWindow = true;
@@ -108,16 +108,16 @@ public static class VideoConverter
         return new string[0];
     }
 
-    private static void GenerateMaster(string[] resolutions, string folderPath)
+    private static void GenerateMaster(string[] resolutions, string folderName)
     {
         Array.Reverse(resolutions);
         var bandWidth = new string[] { "700000", "1000000", "2000000", "3500000", "7000000" };
-        using (StreamWriter writer = new StreamWriter(folderPath + "\\" + "master.m3u8"))
+        using (StreamWriter writer = new StreamWriter(UploadFolder.VIDEOS + "\\" + folderName + "\\" + "master.m3u8"))
         {
             writer.Write("#EXTM3U\n");
             for (int i = 0; i < resolutions.Length; i++)
             {
-                writer.Write($"#EXT-X-STREAM-INF:PROGRAM-ID=1, BANDWIDTH={bandWidth[i]}\n{resolutions[i]}/{resolutions[i]}_out.m3u8\n");
+                writer.Write($"#EXT-X-STREAM-INF:PROGRAM-ID=1, BANDWIDTH={bandWidth[i]}\n{folderName}%5C{resolutions[i]}%5C{resolutions[i]}_out.m3u8\n");
             }
         }
     }
